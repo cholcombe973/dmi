@@ -1,0 +1,14 @@
+[root]
+name = "dmi"
+version = "0.1.0"
+dependencies = [
+ "plain 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "plain"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum plain 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e61c86dfec091c60ffbda6d105593c960df4a0276835d70acb6e55d2154132d1"

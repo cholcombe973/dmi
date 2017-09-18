@@ -1,12 +1,13 @@
-#![no_std]
-#![feature(alloc)]
-
-#[macro_use]
-extern crate alloc;
+//#[macro_use]
+//extern crate alloc;
 extern crate plain;
 
-use alloc::{String, Vec};
-use plain::Plain;
+//use alloc::{String, Vec};
+use std::fs::File;
+use std::result::Result as StdResult;
+use std::io::{Read, Result};
+use std::path::Path;
+use plain::{Error, Plain};
 
 #[repr(packed)]
 pub struct Smbios {
@@ -23,7 +24,7 @@ pub struct Smbios {
     pub table_length: u16,
     pub table_address: u32,
     pub structure_count: u16,
-    pub bcd_revision: u8
+    pub bcd_revision: u8,
 }
 
 unsafe impl Plain for Smbios {}
@@ -33,7 +34,7 @@ unsafe impl Plain for Smbios {}
 pub struct Header {
     pub kind: u8,
     pub len: u8,
-    pub handle: u16
+    pub handle: u16,
 }
 
 unsafe impl Plain for Header {}
@@ -42,7 +43,7 @@ unsafe impl Plain for Header {}
 pub struct Table {
     pub header: Header,
     pub data: Vec<u8>,
-    pub strings: Vec<String>
+    pub strings: Vec<String>,
 }
 
 impl Table {
@@ -78,6 +79,25 @@ pub struct SystemInfo {
 }
 
 unsafe impl Plain for SystemInfo {}
+
+impl SystemInfo {
+    pub fn from_bytes(buf: &[u8]) -> StdResult<&SystemInfo, Error> {
+        plain::from_bytes(buf)
+    }
+
+    pub fn from_mut_bytes(buf: &mut [u8]) -> StdResult<&mut SystemInfo, Error> {
+        plain::from_mut_bytes(buf)
+    }
+}
+/// Helper function that opens /sys/firmware/dmi/tables/DMI and
+/// returns the Table data
+pub fn get_tables(dmi_path: &Path) -> Result<Vec<Table>> {
+    let mut f = File::open(dmi_path)?;
+    let mut buff: Vec<u8> = Vec::new();
+    f.read_to_end(&mut buff)?;
+
+    Ok(tables(&buff))
+}
 
 pub fn tables(data: &[u8]) -> Vec<Table> {
     let mut tables = Vec::new();
@@ -131,7 +151,7 @@ pub fn tables(data: &[u8]) -> Vec<Table> {
                 }
             }
 
-            if string.is_empty() && ! strings.is_empty() {
+            if string.is_empty() && !strings.is_empty() {
                 break;
             } else {
                 //println!("{}: {}", strings.len(), string);
@@ -142,7 +162,7 @@ pub fn tables(data: &[u8]) -> Vec<Table> {
         tables.push(Table {
             header: header,
             data: table,
-            strings: strings
+            strings: strings,
         });
     }
 
